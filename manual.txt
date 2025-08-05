@@ -107,3 +107,12 @@ Returns all subsets of A with cardinality c.
 
 minimalSetOfGenerators(Q)
 Finds a minimal generating set of the rack Q.
+
+simpleGenerators(G)
+Returns the generators of the simplified finite presentation of the group G.
+
+simpleRelations(G)
+Returns the relators of the simplified finite presentation of the group G.
+
+simpleAutomorphism(G, a)
+Returns the image of the automorphism a of the group G transferred to its simplified finite presentation.

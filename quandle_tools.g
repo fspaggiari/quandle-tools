@@ -173,6 +173,93 @@ end;
 
 
 
+### DESC: Returns the generators of a simplified presentation of a finite group G.
+### STATUS: WORKING
+### NOTES: Uses SimplifiedFpGroup after computing an Fp-group presentation.
+
+simpleGenerators := function(G)
+
+	local H;
+
+	H := SimplifiedFpGroup(Image(IsomorphismFpGroup(G)));
+
+	return GeneratorsOfGroup(H);
+
+end;
+
+
+
+
+### DESC: Returns the relators of a simplified presentation of a finite group G.
+### STATUS: WORKING
+### NOTES: Uses SimplifiedFpGroup to obtain a reduced Fp-presentation.
+
+simpleRelations := function(G)
+
+	local H;
+
+	H := SimplifiedFpGroup(Image(IsomorphismFpGroup(G)));
+
+	return RelatorsOfFpGroup(H);
+
+end;
+
+
+
+
+
+### DESC: Transfers an automorphism a of a finite group G to its simplified Fp-presentation.
+### STATUS: WORKING
+### NOTES: Ensures the automorphism is correctly oriented and translates it via polycyclic and Fp isomorphisms.
+
+simpleAutomorphism := function(G, a)
+
+    local astr, genG, iso, F, isoH, H, gens_H, gens_G, isoPc, PcG, pcgens, images, autPc, autG, images_H, autH;
+
+    # Step 0: Correct the direction of the automorphism, if necessary
+    astr := String(a);
+    genG := GeneratorsOfGroup(G);
+
+    if not astr{[1..Size(String(genG))]} = String(genG) then
+        a := Inverse(a);
+    fi;
+
+    # Step 1: Create an isomorphism to a finitely presented group and simplify it
+    iso := IsomorphismFpGroup(G);;
+    F := Image(iso);;
+    isoH := IsomorphismSimplifiedFpGroup(F);;
+    H := Image(isoH);;
+
+    # Step 2: Get the generators of H and trace them back to the corresponding generators of G
+    gens_H := GeneratorsOfGroup(H);;
+    gens_G := List(gens_H, h -> PreImage(iso, PreImage(isoH, h)));;
+
+    # Step 3: Transfer the automorphism a to the polycyclic presentation PcG
+    isoPc := IsomorphismPcGroup(G);;
+    PcG := Image(isoPc);;
+    pcgens := GeneratorsOfGroup(PcG);;
+    images := List(pcgens, x -> Image(isoPc, a(Image(isoPc^-1, x))));;
+
+    autPc := GroupHomomorphismByImages(PcG, PcG, pcgens, images);;
+
+    # Step 4: Transfer the automorphism back from PcG to the original group G
+    autG := GroupHomomorphismByFunction(G, G,
+        g -> Image(isoPc^-1, Image(autPc, Image(isoPc, g)))
+    );;
+
+    # Step 5: Transfer the automorphism from G to the simplified presentation H
+    images_H := List(gens_G, g -> Image(isoH, Image(iso, Image(autG, g))));;
+    autH := GroupHomomorphismByImages(H, H, gens_H, images_H);;
+
+    return autH;
+
+end;
+
+
+
+
+
+
 
 #################################
 ##                             ##
@@ -1007,9 +1094,7 @@ end;
 ### NOTES: For connected quandles, all congruences are uniform, so this returns all congruences in that case
 
 uniformCongruences := function(Q)
-    local divisors, elements, perms, potentialCongruences, congruences;
-    local x, y, z, d, block, cong;
-    local Lx, Ly, Lz, Lxmo, Lymo, Lzmo, uniformPartitions, check;
+    local divisors, elements, perms, potentialCongruences, congruences, x, y, z, d, block, cong, Lx, Ly, Lz, Lxmo, Lymo, Lzmo, uniformPartitions, check;
 
     divisors := DivisorsInt(Size(Q));
     elements := Q.labels;
